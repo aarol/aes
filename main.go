@@ -52,7 +52,7 @@ var rcon = [256]byte{
 	0x61, 0xc2, 0x9f, 0x25, 0x4a, 0x94, 0x33, 0x66, 0xcc, 0x83, 0x1d, 0x3a, 0x74, 0xe8, 0xcb, 0x8d,
 }
 
-func KeyExpansion(key [4]uint32, enc []uint32) {
+func KeyExpansion(key []uint32, enc []uint32) {
 	for i := 0; i < 4; i++ {
 		enc[i] = key[i]
 	}
@@ -69,7 +69,6 @@ type state = []byte
 
 func printState(s state) {
 	for j := 0; j < 4; j++ {
-		// 00< 01 02 03 04< 05 06 ..
 		for i := 0; i < len(s); i += 4 {
 			fmt.Printf(" %2.2x ", s[i+j])
 		}
@@ -148,24 +147,58 @@ func MixColumns(s state) state {
 	return s
 }
 
-func main() {
-	// fmt.Printf("%x\n", SubWord(RotWord(uint32(0x0c0d0e0f))))
-	// key := [4]uint32{
-	// 	0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c,
-	// 	// 0x00010203, 0x04050607, 0x08090a0b, 0x0c0d0e0f,
-	// }
-	// enc := make([]uint32, 44)
-	// KeyExpansion(key, enc)
-	// fmt.Printf("%x\n", enc)
-	s := state{
-		0x00, 0x01, 0x02, 0x03,
-		0x04, 0x05, 0x06, 0x07,
-		0x08, 0x09, 0x0a, 0x0b,
-		0x0c, 0x0d, 0x0e, 0x0f,
+func wordsToByte(a []uint32) []byte {
+	b := make([]byte, len(a)*4)
+	for i := 0; i < len(a); i++ {
+		b[i*4] = byte(a[i] >> 24 & 0xff)
+		b[i*4+1] = byte(a[i] >> 16 & 0xff)
+		b[i*4+2] = byte(a[i] >> 8 & 0xff)
+		b[i*4+3] = byte(a[i] & 0xff)
 	}
-	s = SubBytes(ShiftRows(s))
-	printState(s)
-	s = MixColumns(s)
-	fmt.Println()
+	return b
+}
+
+func AddRoundKey(s state, key []byte) state {
+	for i := 0; i < len(s); i++ {
+		s[i] = s[i] ^ key[i]
+	}
+	return s
+}
+
+func encrypt(s state, key []uint32) state {
+	AddRoundKey(s, wordsToByte(key))
+	keys := make([]uint32, 44)
+	KeyExpansion(key, keys)
+	for r := 1; r < 10; r++ {
+		s = MixColumns(ShiftRows(SubBytes(s)))
+		s = AddRoundKey(s, wordsToByte(keys[r*4:r*4+4]))
+	}
+
+	s = SubBytes(s)
+	s = ShiftRows(s)
+	s = AddRoundKey(s, wordsToByte(keys[40:44]))
+
+	return s
+}
+
+func main() {
+
+	// s := state{
+	// 	0x00, 0x01, 0x02, 0x03,
+	// 	0x04, 0x05, 0x06, 0x07,
+	// 	0x08, 0x09, 0x0a, 0x0b,
+	// 	0x0c, 0x0d, 0x0e, 0x0f,
+	// }
+	key := []uint32{
+		0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c,
+	}
+	// s = SubBytes(ShiftRows(s))
+	// s = MixColumns(s)
+	// printState(s)
+	// fmt.Println()
+	// s = AddRoundKey(s, wordToByte(key))
+	// printState(s)
+	s := []byte("theblockbreakers")
+	s = encrypt(s, key)
 	printState(s)
 }
