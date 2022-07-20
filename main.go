@@ -30,7 +30,6 @@ func SubWord(a uint32) uint32 {
 		uint32(sbox_en[a>>16&0xff])<<16 |
 		uint32(sbox_en[a>>8&0xff])<<8 |
 		uint32(sbox_en[a&0xff])
-
 }
 
 var rcon = [256]byte{
@@ -199,6 +198,13 @@ func main() {
 	// s = AddRoundKey(s, wordToByte(key))
 	// printState(s)
 	s := []byte("theblockbreakers")
+	// enc := SubBytes(s)
+	// fmt.Println(bytes.Equal(InvSubBytes(enc), []byte("theblockbreakers")))
 	s = encrypt(s, key)
 	printState(s)
+	key = []uint32{
+		0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c,
+	}
+	s = decrypt(s, key)
+	fmt.Println(string(s))
 }
