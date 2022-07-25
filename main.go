@@ -55,7 +55,7 @@ func KeyExpansion(key []uint32, enc []uint32) {
 	for i := 0; i < 4; i++ {
 		enc[i] = key[i]
 	}
-	for i := 4; i < 4*11; i++ {
+	for i := 4; i < len(enc); i++ {
 		t := enc[i-1]
 		if i%4 == 0 {
 			t = SubWord(RotWord(t)) ^ (uint32(rcon[i/4]) << 24)
@@ -182,29 +182,15 @@ func encrypt(s state, key []uint32) state {
 
 func main() {
 
-	// s := state{
-	// 	0x00, 0x01, 0x02, 0x03,
-	// 	0x04, 0x05, 0x06, 0x07,
-	// 	0x08, 0x09, 0x0a, 0x0b,
-	// 	0x0c, 0x0d, 0x0e, 0x0f,
-	// }
 	key := []uint32{
 		0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c,
 	}
-	// s = SubBytes(ShiftRows(s))
-	// s = MixColumns(s)
-	// printState(s)
-	// fmt.Println()
-	// s = AddRoundKey(s, wordToByte(key))
-	// printState(s)
+
 	s := []byte("theblockbreakers")
-	// enc := SubBytes(s)
-	// fmt.Println(bytes.Equal(InvSubBytes(enc), []byte("theblockbreakers")))
+
 	s = encrypt(s, key)
 	printState(s)
-	key = []uint32{
-		0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c,
-	}
+
 	s = decrypt(s, key)
 	fmt.Println(string(s))
 }
